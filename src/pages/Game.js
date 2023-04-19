@@ -1,11 +1,11 @@
-// a página de jogo vai aqui, hehehe
 import React, { Component } from 'react';
+import Header from '../components/Header';
 
 class Game extends Component {
   render() {
     return (
       <div>
-        Oi, aqui vai o jogo!
+        <Header />
       </div>
     );
   }
