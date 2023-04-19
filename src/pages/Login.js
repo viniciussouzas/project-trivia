@@ -28,7 +28,7 @@ class Login extends Component {
 
   render() {
     const { name, email } = this.state;
-
+    const { history } = this.props;
     const isValid = name && email;
 
     return (
@@ -56,6 +56,12 @@ class Login extends Component {
           onClick={ this.handlePlay }
         >
           Play
+        </button>
+        <button
+          data-testid="btn-settings"
+          onClick={ () => history.push('/settings') }
+        >
+          Settings
         </button>
       </div>
     );
