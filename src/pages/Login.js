@@ -23,7 +23,6 @@ class Login extends Component {
     const { history } = this.props;
     history.push('/game');
     localStorage.setItem('token', token);
-    console.log(token);
   };
 
   render() {
