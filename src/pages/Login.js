@@ -1,7 +1,7 @@
 import { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { saveLoginData } from '../redux/actions';
+import { saveLoginData, saveQuestionsThunk } from '../redux/actions';
 import { getToken } from '../services/fetchApi';
 
 class Login extends Component {
@@ -21,6 +21,7 @@ class Login extends Component {
     const { history, dispatch } = this.props;
     const { name, email } = this.state;
     dispatch(saveLoginData(name, email));
+    dispatch(saveQuestionsThunk());
     history.push('/game');
   };
 
