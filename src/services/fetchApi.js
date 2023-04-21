@@ -10,5 +10,10 @@ export const getQuestions = async () => {
   const response = await fetch(`https://opentdb.com/api.php?amount=5&token=${token}`);
   const data = await response.json();
 
+  if (data.response_code !== 0) {
+    localStorage.removeItem('token');
+    window.location.href = '/';
+  }
+
   return data.results;
 };

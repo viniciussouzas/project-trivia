@@ -1,40 +1,80 @@
+/* eslint-disable react/no-danger */
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import PropTypes from 'prop-types';
 import Header from '../components/Header';
+import { getQuestions } from '../services/fetchApi';
 
 class Game extends Component {
-  render() {
-    const { questions } = this.props;
+  state = {
+    question: {},
+  };
 
-    if (!questions.length) return <p>Loading...</p>;
+  async componentDidMount() {
+    const questions = await getQuestions();
+    this.setState({
+      question: questions[0],
+    });
+  }
 
-    return (
-      <div>
-        <Header />
-        <p data-testid="question-category">{questions[0].category}</p>
-        <p data-testid="question-text">{questions[0].question}</p>
-        { questions[0].type === 'multiple' ? (
-          <div>
-            <button>{questions[0].correct_answer}</button>
-            <button>{questions[0][incorrect_answer][0]}</button>
-            <button>{questions[0][incorrect_answer][1]}</button>
-            <button>{questions[0][incorrect_answer][2]}</button>
-          </div>
-        ) : (
-          <button>Boolean</button>
-        )}
-      </div>
+  createButtons = () => {
+    const { question } = this.state;
+    const correctAnswerBtn = (
+      <button
+        data-testid="correct-answer"
+        dangerouslySetInnerHTML={ { __html: question.correct_answer } }
+        aria-label="correct-answer"
+      />
     );
+    const incorrectAnswersBtns = (
+      question.incorrect_answers.map((answer, index) => (
+        <button
+          data-testid={ `wrong-answer-${index}` }
+          key={ index }
+          dangerouslySetInnerHTML={ { __html: answer } }
+          aria-label="incorrect-answer"
+        />
+      ))
+    );
+    const buttons = [correctAnswerBtn, ...incorrectAnswersBtns];
+    return buttons;
+  };
+
+  sortButtons = () => {
+    const buttons = this.createButtons();
+    const randomComparator = 0.5;
+    const randomButtons = buttons.sort(() => Math.random() - randomComparator);
+    return randomButtons;
+  };
+
+  render() {
+    const { question } = this.state;
+    if (question && Object.keys(question).length > 0) {
+      const buttons = this.sortButtons();
+      return (
+        <div>
+          <Header />
+          <p data-testid="question-category">{question.category}</p>
+          <p
+            data-testid="question-text"
+            dangerouslySetInnerHTML={ {
+              __html: question.question,
+            } }
+          />
+          {
+            buttons.map((button, index) => (
+              <div
+                key={ index }
+                data-testid="answer-options"
+              >
+                {button}
+              </div>
+
+            ))
+          }
+        </div>
+      );
+    }
+    return <div>Loading...</div>;
   }
 }
 
-const mapStateToProps = (state) => ({
-  questions: state.gameReducer.questions,
-});
-
-Game.propTypes = {
-  questions: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
-};
-
-export default connect(mapStateToProps)(Game);
+export default Game;
