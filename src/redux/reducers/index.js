@@ -3,6 +3,7 @@ import { SAVE_LOGIN_DATA } from '../actions';
 
 const INITIAL_STATE = {
   name: '',
+  email: '',
 };
 
 const gameReducer = (state = INITIAL_STATE, action) => {
