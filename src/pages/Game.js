@@ -15,31 +15,46 @@ class Game extends Component {
     });
   }
 
-  createButtons = () => {
+  handleAnswerButtonClick = () => {
+    const buttons = document.querySelectorAll('.answer-button');
+    buttons.forEach((button) => {
+      button.style.border = (
+        button.ariaLabel === 'correct-answer' ? (
+          '3px solid rgb(6, 240, 15)'
+        ) : '3px solid red'
+      );
+    });
+  };
+
+  createAnswerButtons = () => {
     const { question } = this.state;
     const correctAnswerBtn = (
       <button
         data-testid="correct-answer"
+        className="answer-button"
         dangerouslySetInnerHTML={ { __html: question.correct_answer } }
         aria-label="correct-answer"
+        onClick={ this.handleAnswerButtonClick }
       />
     );
-    const incorrectAnswersBtns = (
+    const incorrectAnswerBtns = (
       question.incorrect_answers.map((answer, index) => (
         <button
           data-testid={ `wrong-answer-${index}` }
           key={ index }
+          className="answer-button"
           dangerouslySetInnerHTML={ { __html: answer } }
           aria-label="incorrect-answer"
+          onClick={ this.handleAnswerButtonClick }
         />
       ))
     );
-    const buttons = [correctAnswerBtn, ...incorrectAnswersBtns];
+    const buttons = [correctAnswerBtn, ...incorrectAnswerBtns];
     return buttons;
   };
 
-  sortButtons = () => {
-    const buttons = this.createButtons();
+  sortAnswerButtons = () => {
+    const buttons = this.createAnswerButtons();
     const randomComparator = 0.5;
     const randomButtons = buttons.sort(() => Math.random() - randomComparator);
     return randomButtons;
@@ -48,7 +63,7 @@ class Game extends Component {
   render() {
     const { question } = this.state;
     if (question && Object.keys(question).length > 0) {
-      const buttons = this.sortButtons();
+      const answerButtons = this.sortAnswerButtons();
       return (
         <div>
           <Header />
@@ -60,7 +75,7 @@ class Game extends Component {
             } }
           />
           {
-            buttons.map((button, index) => (
+            answerButtons.map((button, index) => (
               <div
                 key={ index }
                 data-testid="answer-options"
