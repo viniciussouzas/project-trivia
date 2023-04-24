@@ -1,7 +1,10 @@
 /* eslint-disable react/no-danger */
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
 import Header from '../components/Header';
 import { getQuestions } from '../services/fetchApi';
+import { saveCorrectAnswer } from '../redux/actions';
 
 class Game extends Component {
   state = {
@@ -15,7 +18,8 @@ class Game extends Component {
     });
   }
 
-  handleAnswerButtonClick = () => {
+  handleAnswerButtonClick = (e) => {
+    const { dispatch } = this.props;
     const buttons = document.querySelectorAll('.answer-button');
     buttons.forEach((button) => {
       button.style.border = (
@@ -24,6 +28,10 @@ class Game extends Component {
         ) : '3px solid red'
       );
     });
+
+    if (e.target.ariaLabel === 'correct-answer') {
+      dispatch(saveCorrectAnswer(1));
+    }
   };
 
   createAnswerButtons = () => {
@@ -92,4 +100,8 @@ class Game extends Component {
   }
 }
 
-export default Game;
+Game.propTypes = {
+  dispatch: PropTypes.func.isRequired,
+};
+
+export default connect()(Game);
