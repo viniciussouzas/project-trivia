@@ -13,6 +13,7 @@ class Game extends Component {
     this.setState({
       question: questions[0],
     });
+    this.handleTimer();
   }
 
   handleAnswerButtonClick = () => {
@@ -58,6 +59,14 @@ class Game extends Component {
     const randomComparator = 0.5;
     const randomButtons = buttons.sort(() => Math.random() - randomComparator);
     return randomButtons;
+  };
+
+  handleTimer = () => {
+    const INTERVAL_TIME = 30000;
+    setTimeout(() => {
+      const answerButtons = document.querySelectorAll('.answer-button');
+      answerButtons.forEach((button) => { button.disabled = true; });
+    }, INTERVAL_TIME);
   };
 
   render() {
