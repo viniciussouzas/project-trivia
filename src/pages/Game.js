@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import Header from '../components/Header';
-import { saveScore } from '../redux/actions';
+import { saveScore, saveCorrectAnswer } from '../redux/actions';
 import { getQuestions } from '../services/fetchApi';
 
 const SET_INTERVAL = 1000;
@@ -40,6 +40,7 @@ class Game extends Component {
       this.setState({
         interval,
         btnClicked: false,
+        timeLeft: 30,
       });
     } else {
       history.push('/feedback');
@@ -87,10 +88,12 @@ class Game extends Component {
 
   handleAnswerButtonClick = (e) => {
     const { interval } = this.state;
+    const { dispatch } = this.props;
     clearInterval(interval);
 
     if (!e.includes('incorrect-answer')) {
       this.calculateScore();
+      dispatch(saveCorrectAnswer(1));
     }
 
     this.setState({ btnClicked: true });

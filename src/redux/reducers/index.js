@@ -1,11 +1,12 @@
 import { combineReducers } from 'redux';
-import { SAVE_LOGIN_DATA, SAVE_SCORE } from '../actions';
+import { SAVE_CORRECT_ANSWER, SAVE_LOGIN_DATA, SAVE_SCORE } from '../actions';
 
 const INITIAL_STATE = {
   name: '',
   gravatarEmail: '',
   assertions: 0,
   score: 0,
+  correctAnswer: 0,
 };
 
 const player = (state = INITIAL_STATE, action) => {
@@ -21,6 +22,12 @@ const player = (state = INITIAL_STATE, action) => {
     return {
       ...state,
       score: state.score + action.payload.score,
+    };
+  }
+  case SAVE_CORRECT_ANSWER: {
+    return {
+      ...state,
+      correctAnswer: state.correctAnswer + action.payload.number,
     };
   }
   default:
