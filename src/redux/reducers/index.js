@@ -6,7 +6,6 @@ const INITIAL_STATE = {
   gravatarEmail: '',
   assertions: 0,
   score: 0,
-  correctAnswer: 0,
 };
 
 const player = (state = INITIAL_STATE, action) => {
@@ -27,7 +26,7 @@ const player = (state = INITIAL_STATE, action) => {
   case SAVE_CORRECT_ANSWER: {
     return {
       ...state,
-      correctAnswer: state.correctAnswer + action.payload.number,
+      assertions: state.assertions + action.payload.number,
     };
   }
   default:

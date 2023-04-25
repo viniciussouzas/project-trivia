@@ -7,13 +7,15 @@ const MAGIC_NUMBER = 3;
 
 class Feedback extends Component {
   render() {
-    const { correctAnswer, history } = this.props;
+    const { assertions, score, history } = this.props;
     return (
       <div>
         <Header />
+        <p data-testid="feedback-total-score">{score}</p>
+        <p data-testid="feedback-total-question">{assertions}</p>
         <p data-testid="feedback-text">
           {
-            correctAnswer < MAGIC_NUMBER ? 'Could be better...' : 'Well Done!'
+            assertions < MAGIC_NUMBER ? 'Could be better...' : 'Well Done!'
           }
         </p>
         <button
@@ -32,7 +34,8 @@ const mapStateToProps = (state) => ({
 });
 
 Feedback.propTypes = {
-  correctAnswer: PropTypes.number.isRequired,
+  assertions: PropTypes.number.isRequired,
+  score: PropTypes.number.isRequired,
   history: PropTypes.shape({
     push: PropTypes.func.isRequired,
   }).isRequired,
