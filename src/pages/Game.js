@@ -11,6 +11,8 @@ class Game extends Component {
     question: {},
     randomAnswerButtons: [],
     nextQuestion: false,
+    timeLeft: 5,
+    disabled: false,
   };
 
   async componentDidMount() {
@@ -19,9 +21,20 @@ class Game extends Component {
       question: questions[0],
     }, () => {
       this.createAnswerButtons();
-      this.handleTimer();
+      // this.handleTimer();
+      this.interval = setInterval(this.handleTimer, 1000);
     });
   }
+
+  handleTimer = () => {
+    const { timeLeft } = this.state;
+    if (timeLeft === 0) {
+      this.setState({ disabled: true }, () => console.log(this.state.disabled));
+      clearInterval(this.interval);
+    } else {
+      this.setState({ timeLeft: timeLeft - 1 });
+    }
+  };
 
   convertDifficulty = () => {
     const hardLevel = 3;
@@ -42,11 +55,11 @@ class Game extends Component {
 
   calculateScore = () => {
     const baseScore = 10;
-    const timer = 15;
+    const { timeLeft } = this.state;
 
     const { dispatch } = this.props;
 
-    const score = baseScore + (timer * this.convertDifficulty());
+    const score = baseScore + (timeLeft * this.convertDifficulty());
 
     dispatch(saveScore(score));
   };
@@ -60,7 +73,7 @@ class Game extends Component {
         ) : '3px solid red'
       );
     });
-
+    // clearInterval(this.interval);
     if (e.target.ariaLabel === 'correct-answer') {
       this.calculateScore();
     }
@@ -68,7 +81,7 @@ class Game extends Component {
   };
 
   createAnswerButtons = () => {
-    const { question } = this.state;
+    const { question, disabled } = this.state;
     if (question && Object.keys(question).length > 0) {
       const correctAnswerBtn = (
         <button
@@ -76,6 +89,7 @@ class Game extends Component {
           className="answer-button"
           dangerouslySetInnerHTML={ { __html: question.correct_answer } }
           aria-label="correct-answer"
+          disabled={ disabled }
           onClick={ this.handleAnswerButtonClick }
         />
       );
@@ -87,6 +101,7 @@ class Game extends Component {
             className="answer-button"
             dangerouslySetInnerHTML={ { __html: answer } }
             aria-label="incorrect-answer"
+            disabled={ disabled }
             onClick={ this.handleAnswerButtonClick }
           />
         ))
@@ -98,20 +113,21 @@ class Game extends Component {
     }
   };
 
-  handleTimer = () => {
-    const INTERVAL_TIME = 30000;
-    setTimeout(() => {
-      const answerButtons = document.querySelectorAll('.answer-button');
-      answerButtons.forEach((button) => { button.disabled = true; });
-    }, INTERVAL_TIME);
-  };
+  // handleTimer = () => {
+  //   const INTERVAL_TIME = 30000;
+  //   setTimeout(() => {
+  //     const answerButtons = document.querySelectorAll('.answer-button');
+  //     answerButtons.forEach((button) => { button.disabled = true; });
+  //   }, INTERVAL_TIME);
+  // };
 
   render() {
-    const { question, randomAnswerButtons, nextQuestion } = this.state;
+    const { question, randomAnswerButtons, nextQuestion, timeLeft } = this.state;
     if (question && Object.keys(question).length > 0) {
       return (
         <div>
           <Header />
+          <p>{timeLeft}</p>
           <p data-testid="question-category">{question.category}</p>
           <p
             data-testid="question-text"
