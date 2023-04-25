@@ -5,8 +5,8 @@ import md5 from 'crypto-js/md5';
 
 class Header extends Component {
   createImgUrl = () => {
-    const { email } = this.props;
-    const emailConverted = md5(email).toString();
+    const { gravatarEmail } = this.props;
+    const emailConverted = md5(gravatarEmail).toString();
     const url = `https://www.gravatar.com/avatar/${emailConverted}`;
     return url;
   };
@@ -29,12 +29,12 @@ class Header extends Component {
 
 Header.propTypes = {
   name: PropTypes.string.isRequired,
-  email: PropTypes.string.isRequired,
+  gravatarEmail: PropTypes.string.isRequired,
 };
 
 const mapStateToProps = (state) => ({
-  name: state.gameReducer.name,
-  email: state.gameReducer.email,
+  name: state.gameReducer.player.name,
+  gravatarEmail: state.gameReducer.player.gravatarEmail,
 });
 
 export default connect(mapStateToProps)(Header);

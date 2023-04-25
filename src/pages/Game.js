@@ -1,6 +1,9 @@
 /* eslint-disable react/no-danger */
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
 import Header from '../components/Header';
+import { saveScore } from '../redux/actions';
 import { getQuestions } from '../services/fetchApi';
 
 class Game extends Component {
@@ -20,7 +23,35 @@ class Game extends Component {
     });
   }
 
-  handleAnswerButtonClick = () => {
+  convertDifficulty = () => {
+    const hardLevel = 3;
+
+    const { question } = this.state;
+
+    switch (question.difficulty) {
+    case 'easy':
+      return 1;
+    case 'medium':
+      return 2;
+    case 'hard':
+      return hardLevel;
+    default:
+      return 0;
+    }
+  };
+
+  calculateScore = () => {
+    const baseScore = 10;
+    const timer = 15;
+
+    const { dispatch } = this.props;
+
+    const score = baseScore + (timer * this.convertDifficulty());
+
+    dispatch(saveScore(score));
+  };
+
+  handleAnswerButtonClick = (e) => {
     const buttons = document.querySelectorAll('.answer-button');
     buttons.forEach((button) => {
       button.style.border = (
@@ -29,6 +60,10 @@ class Game extends Component {
         ) : '3px solid red'
       );
     });
+
+    if (e.target.ariaLabel === 'correct-answer') {
+      this.calculateScore();
+    }
     this.setState({ nextQuestion: true });
   };
 
@@ -105,4 +140,8 @@ class Game extends Component {
   }
 }
 
-export default Game;
+Game.propTypes = {
+  dispatch: PropTypes.func.isRequired,
+};
+
+export default connect()(Game);
