@@ -1,13 +1,19 @@
 /* eslint-disable react/no-danger */
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
 import Header from '../components/Header';
+import { saveScore } from '../redux/actions';
 import { getQuestions } from '../services/fetchApi';
+
+const SET_INTERVAL = 1000;
 
 class Game extends Component {
   state = {
     question: {},
     randomAnswerButtons: [],
     nextQuestion: false,
+    timeLeft: 30,
   };
 
   async componentDidMount() {
@@ -17,10 +23,57 @@ class Game extends Component {
     }, () => {
       this.createAnswerButtons();
       this.handleTimer();
+      this.interval = setInterval(this.handleTimerState, SET_INTERVAL);
     });
   }
 
-  handleAnswerButtonClick = () => {
+  handleTimerState = () => {
+    const { timeLeft } = this.state;
+    if (timeLeft > 0) {
+      this.setState({ timeLeft: timeLeft - 1 });
+    } else {
+      clearInterval(this.interval);
+    }
+  };
+
+  handleTimer = () => {
+    const { timeLeft } = this.state;
+    const INITIAL_TIMER = timeLeft * SET_INTERVAL;
+    setTimeout(() => {
+      const answerButtons = document.querySelectorAll('.answer-button');
+      answerButtons.forEach((button) => { button.disabled = true; });
+    }, INITIAL_TIMER);
+  };
+
+  convertDifficulty = () => {
+    const hardLevel = 3;
+
+    const { question } = this.state;
+
+    switch (question.difficulty) {
+    case 'easy':
+      return 1;
+    case 'medium':
+      return 2;
+    case 'hard':
+      return hardLevel;
+    default:
+      return 0;
+    }
+  };
+
+  calculateScore = () => {
+    const baseScore = 10;
+    const { timeLeft } = this.state;
+
+    const { dispatch } = this.props;
+
+    const score = baseScore + (timeLeft * this.convertDifficulty());
+
+    dispatch(saveScore(score));
+  };
+
+  handleAnswerButtonClick = (e) => {
     const buttons = document.querySelectorAll('.answer-button');
     buttons.forEach((button) => {
       button.style.border = (
@@ -29,6 +82,10 @@ class Game extends Component {
         ) : '3px solid red'
       );
     });
+    clearInterval(this.interval);
+    if (e.target.ariaLabel === 'correct-answer') {
+      this.calculateScore();
+    }
     this.setState({ nextQuestion: true });
   };
 
@@ -63,20 +120,13 @@ class Game extends Component {
     }
   };
 
-  handleTimer = () => {
-    const INTERVAL_TIME = 30000;
-    setTimeout(() => {
-      const answerButtons = document.querySelectorAll('.answer-button');
-      answerButtons.forEach((button) => { button.disabled = true; });
-    }, INTERVAL_TIME);
-  };
-
   render() {
-    const { question, randomAnswerButtons, nextQuestion } = this.state;
+    const { question, randomAnswerButtons, nextQuestion, timeLeft } = this.state;
     if (question && Object.keys(question).length > 0) {
       return (
         <div>
           <Header />
+          <p>{timeLeft}</p>
           <p data-testid="question-category">{question.category}</p>
           <p
             data-testid="question-text"
@@ -105,4 +155,8 @@ class Game extends Component {
   }
 }
 
-export default Game;
+Game.propTypes = {
+  dispatch: PropTypes.func.isRequired,
+};
+
+export default connect()(Game);
