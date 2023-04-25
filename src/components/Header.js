@@ -34,9 +34,9 @@ Header.propTypes = {
 };
 
 const mapStateToProps = (state) => ({
-  name: state.gameReducer.player.name,
-  gravatarEmail: state.gameReducer.player.gravatarEmail,
-  score: state.gameReducer.player.score,
+  name: state.player.name,
+  gravatarEmail: state.player.gravatarEmail,
+  score: state.player.score,
 });
 
 export default connect(mapStateToProps)(Header);
