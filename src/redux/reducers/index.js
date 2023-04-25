@@ -1,19 +1,27 @@
 import { combineReducers } from 'redux';
-import { SAVE_CORRECT_ANSWER, SAVE_LOGIN_DATA } from '../actions';
+import { SAVE_CORRECT_ANSWER, SAVE_LOGIN_DATA, SAVE_SCORE } from '../actions';
 
 const INITIAL_STATE = {
   name: '',
-  email: '',
+  gravatarEmail: '',
+  assertions: 0,
+  score: 0,
   correctAnswer: 0,
 };
 
-const gameReducer = (state = INITIAL_STATE, action) => {
+const player = (state = INITIAL_STATE, action) => {
   switch (action.type) {
   case SAVE_LOGIN_DATA: {
     return {
       ...state,
       name: action.payload.name,
-      email: action.payload.email,
+      gravatarEmail: action.payload.email,
+    };
+  }
+  case SAVE_SCORE: {
+    return {
+      ...state,
+      score: state.score + action.payload.score,
     };
   }
   case SAVE_CORRECT_ANSWER: {
@@ -27,6 +35,6 @@ const gameReducer = (state = INITIAL_STATE, action) => {
   }
 };
 
-const rootReducer = combineReducers({ gameReducer });
+const rootReducer = combineReducers({ player });
 
 export default rootReducer;

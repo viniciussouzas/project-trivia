@@ -3,67 +3,122 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import Header from '../components/Header';
+import { saveScore, saveCorrectAnswer } from '../redux/actions';
 import { getQuestions } from '../services/fetchApi';
-import { saveCorrectAnswer } from '../redux/actions';
+
+const SET_INTERVAL = 1000;
 
 class Game extends Component {
   state = {
     question: {},
+    questions: [],
+    index: 0,
+    interval: null,
+    btnClicked: false,
     randomAnswerButtons: [],
-    nextQuestion: false,
+    timeLeft: 30,
   };
 
   async componentDidMount() {
     const questions = await getQuestions();
     this.setState({
-      question: questions[0],
-    }, () => {
-      this.createAnswerButtons();
-      this.handleTimer();
-    });
+      questions,
+    }, this.handleNextQuestion);
   }
 
-  handleAnswerButtonClick = (e) => {
-    const { dispatch } = this.props;
-    const buttons = document.querySelectorAll('.answer-button');
-    buttons.forEach((button) => {
-      button.style.border = (
-        button.ariaLabel === 'correct-answer' ? (
-          '3px solid rgb(6, 240, 15)'
-        ) : '3px solid red'
-      );
-    });
+  handleNextQuestion = () => {
+    const MAX_INDEX = 4;
+    const { questions, index } = this.state;
+    const { history } = this.props;
 
-    if (e.target.ariaLabel === 'correct-answer') {
+    if (index <= MAX_INDEX) {
+      this.setState({
+        question: questions[index],
+        index: index + 1,
+      }, this.createAnswerButtons);
+      const interval = setInterval(() => this.handleTimerState(interval), SET_INTERVAL);
+      this.setState({
+        interval,
+        btnClicked: false,
+        timeLeft: 30,
+      });
+    } else {
+      history.push('/feedback');
+    }
+  };
+
+  handleTimerState = (interval) => {
+    const { timeLeft } = this.state;
+
+    if (timeLeft > 0) {
+      this.setState({ timeLeft: timeLeft - 1 });
+    } else {
+      clearInterval(interval);
+      this.setState({ btnClicked: true });
+    }
+  };
+
+  convertDifficulty = () => {
+    const hardLevel = 3;
+
+    const { question } = this.state;
+
+    switch (question.difficulty) {
+    case 'easy':
+      return 1;
+    case 'medium':
+      return 2;
+    case 'hard':
+      return hardLevel;
+    default:
+      return 0;
+    }
+  };
+
+  calculateScore = () => {
+    const baseScore = 10;
+    const { timeLeft } = this.state;
+
+    const { dispatch } = this.props;
+
+    const score = baseScore + (timeLeft * this.convertDifficulty());
+
+    dispatch(saveScore(score));
+  };
+
+  handleAnswerButtonClick = (e) => {
+    const { interval } = this.state;
+    const { dispatch } = this.props;
+    clearInterval(interval);
+
+    if (!e.includes('incorrect-answer')) {
+      this.calculateScore();
       dispatch(saveCorrectAnswer(1));
     }
-    this.setState({ nextQuestion: true });
+
+    this.setState({ btnClicked: true });
   };
 
   createAnswerButtons = () => {
     const { question } = this.state;
     if (question && Object.keys(question).length > 0) {
-      const correctAnswerBtn = (
-        <button
-          data-testid="correct-answer"
-          className="answer-button"
-          dangerouslySetInnerHTML={ { __html: question.correct_answer } }
-          aria-label="correct-answer"
-          onClick={ this.handleAnswerButtonClick }
-        />
-      );
+      const correctAnswerBtn = {
+        dataTestid: 'correct-answer',
+        className: 'answer-button',
+        answer: question.correct_answer,
+        ariaLabel: 'correct-answer',
+      };
       const incorrectAnswerBtns = (
         question.incorrect_answers.map((answer, index) => (
-          <button
-            data-testid={ `wrong-answer-${index}` }
-            key={ index }
-            className="answer-button"
-            dangerouslySetInnerHTML={ { __html: answer } }
-            aria-label="incorrect-answer"
-            onClick={ this.handleAnswerButtonClick }
-          />
+          {
+            dataTestid: `wrong-answer-${index}`,
+            className: 'answer-button',
+            answer,
+            ariaLabel: 'incorrect-answer',
+          }
         ))
       );
+
       const buttons = [correctAnswerBtn, ...incorrectAnswerBtns];
       const randomComparator = 0.5;
       const randomAnswerButtons = buttons.sort(() => Math.random() - randomComparator);
@@ -71,20 +126,13 @@ class Game extends Component {
     }
   };
 
-  handleTimer = () => {
-    const INTERVAL_TIME = 30000;
-    setTimeout(() => {
-      const answerButtons = document.querySelectorAll('.answer-button');
-      answerButtons.forEach((button) => { button.disabled = true; });
-    }, INTERVAL_TIME);
-  };
-
   render() {
-    const { question, randomAnswerButtons, nextQuestion } = this.state;
+    const { question, randomAnswerButtons, timeLeft, btnClicked } = this.state;
     if (question && Object.keys(question).length > 0) {
       return (
         <div>
           <Header />
+          <p>{timeLeft}</p>
           <p data-testid="question-category">{question.category}</p>
           <p
             data-testid="question-text"
@@ -98,13 +146,26 @@ class Game extends Component {
                 key={ index }
                 data-testid="answer-options"
               >
-                {button}
+                <button
+                  data-testid={ button.dataTestid }
+                  onClick={ () => this.handleAnswerButtonClick(button.ariaLabel) }
+                  className={ btnClicked ? button.ariaLabel : '' }
+                  disabled={ btnClicked }
+                >
+                  {button.answer}
+                </button>
               </div>
 
             ))
           }
           {
-            nextQuestion && <button data-testid="btn-next">Next</button>
+            btnClicked && (
+              <button
+                data-testid="btn-next"
+                onClick={ this.handleNextQuestion }
+              >
+                Next
+              </button>)
           }
         </div>
       );
@@ -115,6 +176,9 @@ class Game extends Component {
 
 Game.propTypes = {
   dispatch: PropTypes.func.isRequired,
+  history: PropTypes.shape({
+    push: PropTypes.func,
+  }).isRequired,
 };
 
 export default connect()(Game);
