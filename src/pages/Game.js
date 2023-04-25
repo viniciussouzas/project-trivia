@@ -6,14 +6,18 @@ import { getQuestions } from '../services/fetchApi';
 class Game extends Component {
   state = {
     question: {},
+    randomAnswerButtons: [],
+    nextQuestion: false,
   };
 
   async componentDidMount() {
     const questions = await getQuestions();
     this.setState({
       question: questions[0],
+    }, () => {
+      this.createAnswerButtons();
+      this.handleTimer();
     });
-    this.handleTimer();
   }
 
   handleAnswerButtonClick = () => {
@@ -25,40 +29,38 @@ class Game extends Component {
         ) : '3px solid red'
       );
     });
+    this.setState({ nextQuestion: true });
   };
 
   createAnswerButtons = () => {
     const { question } = this.state;
-    const correctAnswerBtn = (
-      <button
-        data-testid="correct-answer"
-        className="answer-button"
-        dangerouslySetInnerHTML={ { __html: question.correct_answer } }
-        aria-label="correct-answer"
-        onClick={ this.handleAnswerButtonClick }
-      />
-    );
-    const incorrectAnswerBtns = (
-      question.incorrect_answers.map((answer, index) => (
+    if (question && Object.keys(question).length > 0) {
+      const correctAnswerBtn = (
         <button
-          data-testid={ `wrong-answer-${index}` }
-          key={ index }
+          data-testid="correct-answer"
           className="answer-button"
-          dangerouslySetInnerHTML={ { __html: answer } }
-          aria-label="incorrect-answer"
+          dangerouslySetInnerHTML={ { __html: question.correct_answer } }
+          aria-label="correct-answer"
           onClick={ this.handleAnswerButtonClick }
         />
-      ))
-    );
-    const buttons = [correctAnswerBtn, ...incorrectAnswerBtns];
-    return buttons;
-  };
-
-  sortAnswerButtons = () => {
-    const buttons = this.createAnswerButtons();
-    const randomComparator = 0.5;
-    const randomButtons = buttons.sort(() => Math.random() - randomComparator);
-    return randomButtons;
+      );
+      const incorrectAnswerBtns = (
+        question.incorrect_answers.map((answer, index) => (
+          <button
+            data-testid={ `wrong-answer-${index}` }
+            key={ index }
+            className="answer-button"
+            dangerouslySetInnerHTML={ { __html: answer } }
+            aria-label="incorrect-answer"
+            onClick={ this.handleAnswerButtonClick }
+          />
+        ))
+      );
+      const buttons = [correctAnswerBtn, ...incorrectAnswerBtns];
+      const randomComparator = 0.5;
+      const randomAnswerButtons = buttons.sort(() => Math.random() - randomComparator);
+      this.setState({ randomAnswerButtons });
+    }
   };
 
   handleTimer = () => {
@@ -70,9 +72,8 @@ class Game extends Component {
   };
 
   render() {
-    const { question } = this.state;
+    const { question, randomAnswerButtons, nextQuestion } = this.state;
     if (question && Object.keys(question).length > 0) {
-      const answerButtons = this.sortAnswerButtons();
       return (
         <div>
           <Header />
@@ -84,7 +85,7 @@ class Game extends Component {
             } }
           />
           {
-            answerButtons.map((button, index) => (
+            randomAnswerButtons.map((button, index) => (
               <div
                 key={ index }
                 data-testid="answer-options"
@@ -93,6 +94,9 @@ class Game extends Component {
               </div>
 
             ))
+          }
+          {
+            nextQuestion && <button data-testid="btn-next">Next</button>
           }
         </div>
       );
