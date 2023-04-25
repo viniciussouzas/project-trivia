@@ -11,38 +11,50 @@ const SET_INTERVAL = 1000;
 class Game extends Component {
   state = {
     question: {},
+    questions: [],
+    index: 0,
+    interval: null,
+    btnClicked: false,
     randomAnswerButtons: [],
-    nextQuestion: false,
     timeLeft: 30,
   };
 
   async componentDidMount() {
     const questions = await getQuestions();
     this.setState({
-      question: questions[0],
-    }, () => {
-      this.createAnswerButtons();
-      this.handleTimer();
-      this.interval = setInterval(this.handleTimerState, SET_INTERVAL);
-    });
+      questions,
+    }, this.handleNextQuestion);
   }
 
-  handleTimerState = () => {
-    const { timeLeft } = this.state;
-    if (timeLeft > 0) {
-      this.setState({ timeLeft: timeLeft - 1 });
+  handleNextQuestion = () => {
+    const MAX_INDEX = 4;
+    const { questions, index } = this.state;
+    const { history } = this.props;
+
+    if (index <= MAX_INDEX) {
+      this.setState({
+        question: questions[index],
+        index: index + 1,
+      }, this.createAnswerButtons);
+      const interval = setInterval(() => this.handleTimerState(interval), SET_INTERVAL);
+      this.setState({
+        interval,
+        btnClicked: false,
+      });
     } else {
-      clearInterval(this.interval);
+      history.push('/feedback');
     }
   };
 
-  handleTimer = () => {
+  handleTimerState = (interval) => {
     const { timeLeft } = this.state;
-    const INITIAL_TIMER = timeLeft * SET_INTERVAL;
-    setTimeout(() => {
-      const answerButtons = document.querySelectorAll('.answer-button');
-      answerButtons.forEach((button) => { button.disabled = true; });
-    }, INITIAL_TIMER);
+
+    if (timeLeft > 0) {
+      this.setState({ timeLeft: timeLeft - 1 });
+    } else {
+      clearInterval(interval);
+      this.setState({ btnClicked: true });
+    }
   };
 
   convertDifficulty = () => {
@@ -74,45 +86,36 @@ class Game extends Component {
   };
 
   handleAnswerButtonClick = (e) => {
-    const buttons = document.querySelectorAll('.answer-button');
-    buttons.forEach((button) => {
-      button.style.border = (
-        button.ariaLabel === 'correct-answer' ? (
-          '3px solid rgb(6, 240, 15)'
-        ) : '3px solid red'
-      );
-    });
-    clearInterval(this.interval);
-    if (e.target.ariaLabel === 'correct-answer') {
+    const { interval } = this.state;
+    clearInterval(interval);
+
+    if (!e.includes('incorrect-answer')) {
       this.calculateScore();
     }
-    this.setState({ nextQuestion: true });
+
+    this.setState({ btnClicked: true });
   };
 
   createAnswerButtons = () => {
     const { question } = this.state;
     if (question && Object.keys(question).length > 0) {
-      const correctAnswerBtn = (
-        <button
-          data-testid="correct-answer"
-          className="answer-button"
-          dangerouslySetInnerHTML={ { __html: question.correct_answer } }
-          aria-label="correct-answer"
-          onClick={ this.handleAnswerButtonClick }
-        />
-      );
+      const correctAnswerBtn = {
+        dataTestid: 'correct-answer',
+        className: 'answer-button',
+        answer: question.correct_answer,
+        ariaLabel: 'correct-answer',
+      };
       const incorrectAnswerBtns = (
         question.incorrect_answers.map((answer, index) => (
-          <button
-            data-testid={ `wrong-answer-${index}` }
-            key={ index }
-            className="answer-button"
-            dangerouslySetInnerHTML={ { __html: answer } }
-            aria-label="incorrect-answer"
-            onClick={ this.handleAnswerButtonClick }
-          />
+          {
+            dataTestid: `wrong-answer-${index}`,
+            className: 'answer-button',
+            answer,
+            ariaLabel: 'incorrect-answer',
+          }
         ))
       );
+
       const buttons = [correctAnswerBtn, ...incorrectAnswerBtns];
       const randomComparator = 0.5;
       const randomAnswerButtons = buttons.sort(() => Math.random() - randomComparator);
@@ -121,7 +124,7 @@ class Game extends Component {
   };
 
   render() {
-    const { question, randomAnswerButtons, nextQuestion, timeLeft } = this.state;
+    const { question, randomAnswerButtons, timeLeft, btnClicked } = this.state;
     if (question && Object.keys(question).length > 0) {
       return (
         <div>
@@ -140,13 +143,26 @@ class Game extends Component {
                 key={ index }
                 data-testid="answer-options"
               >
-                {button}
+                <button
+                  data-testid={ button.dataTestid }
+                  onClick={ () => this.handleAnswerButtonClick(button.ariaLabel) }
+                  className={ btnClicked ? button.ariaLabel : '' }
+                  disabled={ btnClicked }
+                >
+                  {button.answer}
+                </button>
               </div>
 
             ))
           }
           {
-            nextQuestion && <button data-testid="btn-next">Next</button>
+            btnClicked && (
+              <button
+                data-testid="btn-next"
+                onClick={ this.handleNextQuestion }
+              >
+                Next
+              </button>)
           }
         </div>
       );
@@ -157,6 +173,9 @@ class Game extends Component {
 
 Game.propTypes = {
   dispatch: PropTypes.func.isRequired,
+  history: PropTypes.shape({
+    push: PropTypes.func,
+  }).isRequired,
 };
 
 export default connect()(Game);
