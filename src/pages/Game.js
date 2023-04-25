@@ -6,13 +6,14 @@ import Header from '../components/Header';
 import { saveScore } from '../redux/actions';
 import { getQuestions } from '../services/fetchApi';
 
+const SET_INTERVAL = 1000;
+
 class Game extends Component {
   state = {
     question: {},
     randomAnswerButtons: [],
     nextQuestion: false,
-    timeLeft: 5,
-    disabled: false,
+    timeLeft: 30,
   };
 
   async componentDidMount() {
@@ -21,22 +22,27 @@ class Game extends Component {
       question: questions[0],
     }, () => {
       this.createAnswerButtons();
-      // this.handleTimer();
-      this.interval = setInterval(this.handleTimer, 1000);
+      this.handleTimer();
+      this.interval = setInterval(this.handleTimerState, SET_INTERVAL);
     });
   }
 
+  handleTimerState = () => {
+    const { timeLeft } = this.state;
+    if (timeLeft > 0) {
+      this.setState({ timeLeft: timeLeft - 1 });
+    } else {
+      clearInterval(this.interval);
+    }
+  };
+
   handleTimer = () => {
     const { timeLeft } = this.state;
-    if (timeLeft === 0) {
-      this.setState({ disabled: true }, () => {
-        const { disabled } = this.state;
-        this.createAnswerButtons(disabled);
-      });
-      clearInterval(this.interval);
-    } else {
-      this.setState({ timeLeft: timeLeft - 1 });
-    }
+    const INITIAL_TIMER = timeLeft * SET_INTERVAL;
+    setTimeout(() => {
+      const answerButtons = document.querySelectorAll('.answer-button');
+      answerButtons.forEach((button) => { button.disabled = true; });
+    }, INITIAL_TIMER);
   };
 
   convertDifficulty = () => {
@@ -76,14 +82,14 @@ class Game extends Component {
         ) : '3px solid red'
       );
     });
-    // clearInterval(this.interval);
+    clearInterval(this.interval);
     if (e.target.ariaLabel === 'correct-answer') {
       this.calculateScore();
     }
     this.setState({ nextQuestion: true });
   };
 
-  createAnswerButtons = (xablau) => {
+  createAnswerButtons = () => {
     const { question } = this.state;
     if (question && Object.keys(question).length > 0) {
       const correctAnswerBtn = (
@@ -92,7 +98,6 @@ class Game extends Component {
           className="answer-button"
           dangerouslySetInnerHTML={ { __html: question.correct_answer } }
           aria-label="correct-answer"
-          disabled={ xablau }
           onClick={ this.handleAnswerButtonClick }
         />
       );
@@ -104,7 +109,6 @@ class Game extends Component {
             className="answer-button"
             dangerouslySetInnerHTML={ { __html: answer } }
             aria-label="incorrect-answer"
-            disabled={ xablau }
             onClick={ this.handleAnswerButtonClick }
           />
         ))
@@ -115,14 +119,6 @@ class Game extends Component {
       this.setState({ randomAnswerButtons });
     }
   };
-
-  // handleTimer = () => {
-  //   const INTERVAL_TIME = 30000;
-  //   setTimeout(() => {
-  //     const answerButtons = document.querySelectorAll('.answer-button');
-  //     answerButtons.forEach((button) => { button.disabled = true; });
-  //   }, INTERVAL_TIME);
-  // };
 
   render() {
     const { question, randomAnswerButtons, nextQuestion, timeLeft } = this.state;
