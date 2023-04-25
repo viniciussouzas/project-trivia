@@ -29,7 +29,10 @@ class Game extends Component {
   handleTimer = () => {
     const { timeLeft } = this.state;
     if (timeLeft === 0) {
-      this.setState({ disabled: true }, () => console.log(this.state.disabled));
+      this.setState({ disabled: true }, () => {
+        const { disabled } = this.state;
+        this.createAnswerButtons(disabled);
+      });
       clearInterval(this.interval);
     } else {
       this.setState({ timeLeft: timeLeft - 1 });
@@ -80,8 +83,8 @@ class Game extends Component {
     this.setState({ nextQuestion: true });
   };
 
-  createAnswerButtons = () => {
-    const { question, disabled } = this.state;
+  createAnswerButtons = (xablau) => {
+    const { question } = this.state;
     if (question && Object.keys(question).length > 0) {
       const correctAnswerBtn = (
         <button
@@ -89,7 +92,7 @@ class Game extends Component {
           className="answer-button"
           dangerouslySetInnerHTML={ { __html: question.correct_answer } }
           aria-label="correct-answer"
-          disabled={ disabled }
+          disabled={ xablau }
           onClick={ this.handleAnswerButtonClick }
         />
       );
@@ -101,7 +104,7 @@ class Game extends Component {
             className="answer-button"
             dangerouslySetInnerHTML={ { __html: answer } }
             aria-label="incorrect-answer"
-            disabled={ disabled }
+            disabled={ xablau }
             onClick={ this.handleAnswerButtonClick }
           />
         ))
